@@ -1,69 +1,3 @@
-/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-           ______     ______     ______   __  __     __     ______
-          /\  == \   /\  __ \   /\__  _\ /\ \/ /    /\ \   /\__  _\
-          \ \  __<   \ \ \/\ \  \/_/\ \/ \ \  _"-.  \ \ \  \/_/\ \/
-           \ \_____\  \ \_____\    \ \_\  \ \_\ \_\  \ \_\    \ \_\
-            \/_____/   \/_____/     \/_/   \/_/\/_/   \/_/     \/_/
-
-
-This is a sample Slack bot built with Botkit.
-
-This bot demonstrates many of the core features of Botkit:
-
-* Connect to Slack using the real time API
-* Receive messages based on "spoken" patterns
-* Reply to messages
-* Use the conversation system to ask questions
-* Use the built in storage system to store and retrieve information
-  for a user.
-
-# RUN THE BOT:
-
-  Get a Bot token from Slack:
-
-    -> http://my.slack.com/services/new/bot
-
-  Run your bot from the command line:
-
-    token=<MY TOKEN> node slack_bot.js
-
-# USE THE BOT:
-
-  Find your bot inside Slack to send it a direct message.
-
-  Say: "Hello"
-
-  The bot will reply "Hello!"
-
-  Say: "who are you?"
-
-  The bot will tell you its name, where it is running, and for how long.
-
-  Say: "Call me <nickname>"
-
-  Tell the bot your nickname. Now you are friends.
-
-  Say: "who am I?"
-
-  The bot will tell you your nickname, if it knows one for you.
-
-  Say: "shutdown"
-
-  The bot will ask if you are sure, and then shut itself down.
-
-  Make sure to invite your bot into other channels using /invite @<my bot>!
-
-# EXTEND THE BOT:
-
-  Botkit has many features for building cool and useful bots!
-
-  Read all about it here:
-
-    -> http://howdy.ai/botkit
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-
-
 if (!process.env.token) {
     console.log('Error: Specify token in environment');
     process.exit(1);
@@ -71,6 +5,7 @@ if (!process.env.token) {
 
 var Botkit = require('./lib/Botkit.js');
 var os = require('os');
+var request = require('request');
 
 var controller = Botkit.slackbot({
     debug: true,
@@ -80,22 +15,40 @@ var bot = controller.spawn({
     token: process.env.token
 }).startRTM();
 
-controller.hears(['hello', 'hi'], 'direct_message,direct_mention,mention', function(bot, message) {
 
-    bot.api.reactions.add({
-        timestamp: message.ts,
-        channel: message.channel,
-        name: 'robot_face',
-    }, function(err, res) {
-        if (err) {
-            bot.botkit.log('Failed to add emoji reaction :(', err);
+controller.hears(['top five'], 'direct_message,direct_mention,mention', function(bot, message) {
+    controller.storage.users.get(message.user, function(err, user) {
+      request('http://54.213.83.132/hackoregon/http/oregon_individual_contributors/5/', function (error, response, body) {
+        if (!error && response.statusCode == 200) {
+
+          var attachments = [];
+          var topFive = JSON.parse(body);
+
+          topFive.forEach(function(d) {
+            var attachment = {
+              text: d.contributor_payee + ' has contributed $' + formatCurrency(d.sum) + '.',
+              color: '#36A64F'
+            };
+            attachments.push(attachment);
+          });
+
+          bot.reply(message,{
+              text: 'Here are the top 5 contributing individuals, for all recipients, in all of Oregon:',
+              attachments: attachments,
+            },function(err,resp) {
+              console.log(err,resp);
+          });
+
         }
+      })
     });
+});
 
 
+controller.hears(['hello', 'hi'], 'direct_message,direct_mention,mention', function(bot, message) {
     controller.storage.users.get(message.user, function(err, user) {
         if (user && user.name) {
-            bot.reply(message, 'Hello ' + user.name + '!!');
+            bot.reply(message, 'Hello ' + user.name + '!');
         } else {
             bot.reply(message, 'Hello.');
         }
@@ -224,7 +177,7 @@ controller.hears(['uptime', 'identify yourself', 'who are you', 'what is your na
             ':robot_face: I am a bot named <@' + bot.identity.name +
              '>. I have been running for ' + uptime + ' on ' + hostname + '.');
 
-    });
+});
 
 function formatUptime(uptime) {
     var unit = 'second';
@@ -242,4 +195,8 @@ function formatUptime(uptime) {
 
     uptime = uptime + ' ' + unit;
     return uptime;
+}
+
+function formatCurrency(n){
+  return n.toFixed(2).replace(/(\d)(?=(\d{3})+\.)/g, '$1,');
 }

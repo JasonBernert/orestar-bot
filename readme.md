@@ -15,4 +15,8 @@ Type: `/invite @orestar` to invite your bot into a channel.
 
 ## What can ORESTAR bot do?
 
-Coming soon...
+ORESTAR bot responds to the following phrases:
+
+`top five` gets the total contributions from the top 5 contributing individuals, for all recipients, in all of Oregon.
+
+More coming soon...
