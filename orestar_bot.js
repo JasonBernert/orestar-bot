@@ -16,34 +16,64 @@ var bot = controller.spawn({
 }).startRTM();
 
 
-controller.hears(['top five'], 'direct_message,direct_mention,mention', function(bot, message) {
+controller.hears(['top (.*)'], 'direct_message,direct_mention,mention', function(bot, message) {
     controller.storage.users.get(message.user, function(err, user) {
-      request('http://54.213.83.132/hackoregon/http/oregon_individual_contributors/5/', function (error, response, body) {
-        if (!error && response.statusCode == 200) {
 
-          var attachments = [];
-          var topFive = JSON.parse(body);
+      var catagory = message.match[1];
 
-          topFive.forEach(function(d) {
-            var attachment = {
-              text: d.contributor_payee + ' has contributed $' + formatCurrency(d.sum) + '.',
-              color: '#36A64F'
-            };
-            attachments.push(attachment);
-          });
+      var links = {
+        businesses: 'http://54.213.83.132/hackoregon/http/oregon_business_contributors/5/',
+        individuals: 'http://54.213.83.132/hackoregon/http/oregon_individual_contributors/5/',
+        committees: 'http://54.213.83.132/hackoregon/http/oregon_committee_contributors/2/'
+      }
 
-          bot.reply(message,{
-              text: 'Here are the top 5 contributing individuals, for all recipients, in all of Oregon:',
-              attachments: attachments,
-            },function(err,resp) {
-              console.log(err,resp);
-          });
+      if (catagory == 'businesses' | 'individuals' | 'committees') {
+        var link = links[catagory];
+        topFive(link, catagory);
+      } else {
+        bot.reply(message,{
+            text: 'I’m sorry. What are you looking for? I can return top `businesses`,`individuals` and `committees`.'
+        },function(err,resp) {
+            console.log(err,resp);
+        });
+      }
 
-        }
-      })
+      function topFive(link, catagory){
+        bot.reply(message,{text: 'Alright, let me get the top ' + catagory + ' for you.'},function(err,resp) {console.log(err,resp);});
+        request(link, function (error, response, body) {
+          if (!error && response.statusCode == 200) {
+
+            var attachments = [];
+            var topFive = JSON.parse(body);
+
+            topFive.forEach(function(d) {
+              var attachment = {
+                text: '*' + d.contributor_payee + '* contributed *$' + formatCurrency(d.sum) + '*.',
+                color: '#36A64F',
+                mrkdwn_in: ["text"]
+              };
+              attachments.push(attachment);
+            });
+
+            bot.reply(message,{
+                text: 'Here are the top ' + catagory + ', for all recipients, in all of Oregon:',
+                attachments: attachments,
+              },function(err,resp) {
+                console.log(err,resp);
+            });
+          }
+        })
+      }
+
     });
 });
 
+controller.hears(['help'], 'direct_message,direct_mention,mention', function(bot, message) {
+    controller.storage.users.get(message.user, function(err, user) {
+        bot.reply(message,{
+            text: '`Hello` will greet you with your name, if it has a nickname saved for your user.\n`Call me` will save a nickname to user name.\n`What is my name?` will respond with users nickname.\n`Who are you?` will respond uptime and hostname data.\n`Shutdown` will shut down the bot.'          });
+    });
+});
 
 controller.hears(['hello', 'hi'], 'direct_message,direct_mention,mention', function(bot, message) {
     controller.storage.users.get(message.user, function(err, user) {
