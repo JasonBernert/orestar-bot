@@ -35,10 +35,14 @@ ORESTAR bot responds to the following phrases:
 
 #### Campaign finance responses
 
-* `top individuals` gets the total contributions from the top 5 contributing individuals, for all recipients, in all of Oregon.
+* `top individuals` gets the total contributions from the top 5 contributing individuals in all of Oregon.
 
-* `top business` gets the total contributions from the top 5 contributing businesses, for all recipients, in all of Oregon.
+* `top business` gets the total contributions from the top 5 contributing businesses in all of Oregon.
 
-* `top committees` gets the total contributions from the top 5 contributing committees, for all recipients, in all of Oregon.
+* `top committees` gets the total contributions from the top 2 contributing committees in all of Oregon.
+
+* `search [candidate name]` gets candidate info.
+
+<!-- * `oregon summary` gets summary statistics for all transactions in the current campaign cycle for all of Oregon. -->
 
 *More coming soon...*

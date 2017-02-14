@@ -27,7 +27,7 @@ controller.hears(['top (.*)'], 'direct_message,direct_mention,mention', function
         committees: 'http://54.213.83.132/hackoregon/http/oregon_committee_contributors/2/'
       }
 
-      if (catagory == 'businesses' | 'individuals' | 'committees') {
+      if (catagory == 'businesses' || 'individuals' || 'committees') {
         var link = links[catagory];
         topFive(link, catagory);
       } else {
@@ -73,6 +73,46 @@ controller.hears(['help'], 'direct_message,direct_mention,mention', function(bot
         bot.reply(message,{
             text: '`Hello` will greet you with your name, if it has a nickname saved for your user.\n`Call me` will save a nickname to user name.\n`What is my name?` will respond with users nickname.\n`Who are you?` will respond uptime and hostname data.\n`Shutdown` will shut down the bot.'          });
     });
+});
+
+controller.hears(['search (.*)', 'find (.*)'], 'direct_message,direct_mention,mention', function(bot, message) {
+
+    var name = message.match[1];
+
+    bot.reply(message,{text: 'Alright, let me look up ' + name + ' for you.'},function(err,resp) {console.log(err,resp);});
+
+    request('http://54.213.83.132/hackoregon/http/candidate_search/' + name + '/', function (error, response, body) {
+      if (!error && response.statusCode == 200) {
+        var data = JSON.parse(body);
+        bot.reply(message,{
+            text: data.candidate_name + ', running for ' + data.race + ', has raised $' + formatCurrency(data.total) + '.',
+            attachments: [{
+                fields: [{
+                    "title": "Website",
+                    "value": data.website,
+                    "short": true
+                  }, {
+                    "title": "Phone",
+                    "value": data.phone,
+                    "short": true
+                  }, {
+                    "title": "Committee Names",
+                    "value": data.committee_names,
+                    "short": true
+                  }, {
+                    "title": "Filer ID",
+                    "value": data.filer_id,
+                    "short": true
+                  }]
+              }]
+          },function(err,resp) {
+            console.log(err,resp);
+        });
+      } else {
+        bot.reply(message,{text: 'Sorry, I couldn’t find ' + name + '.'},function(err,resp) {console.log(err,resp);});
+      }
+
+    })
 });
 
 controller.hears(['hello', 'hi'], 'direct_message,direct_mention,mention', function(bot, message) {
